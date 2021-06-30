@@ -18,24 +18,15 @@ contract Incentive is Owner {
     AliToken public ali; // claimed token address
 
     uint public startBlock;
-    // uint public numberTokenperBlock; // number of reward tokens are issued per 1 block 
+
     uint public lastRewardBlock; // record last reward block
     
-    uint public keepPercent = 80; // The amount of tokens distributed in the next period is 80% of the previous period
-
-    uint public initialRewardPerBlock = 4052511416000000000; // scaled by 1e18. That means about 4.052511416 ALI per block in the first period
-
-    uint public maxiumPeriodIndex = 9;
-
-    uint public blockPerPeriod = 5256000;
-
     event Claim(uint indexed lastBlock, uint indexed currentBlock, uint indexed amount, address add);
     event ChangeNumberTokenperBlock(uint indexed oldNumer, uint indexed newNumber);
 
     constructor(AliToken _ali, address add, uint256 _startBlock) public {
         ali = _ali;
         claimableAdress = add;
-        // numberTokenperBlock = _numberTokenperBlock;
         lastRewardBlock = _startBlock;
         startBlock = _startBlock;
     }
@@ -106,8 +97,8 @@ contract Incentive is Owner {
      * @return A number representing the reward token per block at specific period. Result is scaled by 1e18.
      */
     function getRewardPerBlock(uint periodIndex) public view returns (uint) {
-        require(periodIndex <= maxiumPeriodIndex, 'Incentive: period invalid');
-        return pow(keepPercent, periodIndex).mul(initialRewardPerBlock).div(pow(100, periodIndex));
+        require(periodIndex <= ali.getMaxiumPeriodIndex(), 'Incentive: period invalid');
+        return pow(ali.getKeepPercent(), periodIndex).mul(ali.getInitialRewardPerBlock()).div(pow(100, periodIndex));
     }
 
     /**
@@ -116,8 +107,8 @@ contract Incentive is Owner {
      * @return A number representing the block number of the milestone at the beginning of the period.
      */
     function getBlockNumberOfMilestone(uint periodIndex) public view returns (uint) {
-        require(periodIndex <= maxiumPeriodIndex, 'Incentive: period invalid');
-        return blockPerPeriod.mul(periodIndex).add(startBlock);
+        require(periodIndex <= ali.getMaxiumPeriodIndex(), 'Incentive: period invalid');
+        return ali.getBlockPerPeriod().mul(periodIndex).add(startBlock);
     }
 
     /**
@@ -127,7 +118,7 @@ contract Incentive is Owner {
      */
     function getPeriodIndexByBlockNumber(uint blockNumber) public view returns (uint) {
         require(blockNumber >= startBlock, 'Incentive: blockNumber invalid');
-        return blockNumber.sub(startBlock).div(blockPerPeriod);
+        return blockNumber.sub(startBlock).div(ali.getBlockPerPeriod());
     }
 
     /**
