@@ -17,19 +17,27 @@ contract Incentive is Owner {
 
     AliToken public ali; // claimed token address
 
-    // uint public startBlock;
+    uint public startBlock;
     // uint public numberTokenperBlock; // number of reward tokens are issued per 1 block 
     uint public lastRewardBlock; // record last reward block
     
+    uint public keepPercent = 80; // The amount of tokens distributed in the next period is 80% of the previous period
+
+    uint public initialRewardPerBlock = 4052511416000000000; // scaled by 1e18. That means about 4.052511416 ALI per block in the first period
+
+    uint public maxiumPeriodIndex = 9;
+
+    uint public blockPerPeriod = 5256000;
+
     event Claim(uint indexed lastBlock, uint indexed currentBlock, uint indexed amount, address add);
     event ChangeNumberTokenperBlock(uint indexed oldNumer, uint indexed newNumber);
 
-    constructor(AliToken _ali, address add, uint _startBlock) public {
+    constructor(AliToken _ali, address add, uint256 _startBlock) public {
         ali = _ali;
         claimableAdress = add;
-        // startBlock = _startBlock;
         // numberTokenperBlock = _numberTokenperBlock;
         lastRewardBlock = _startBlock;
+        startBlock = _startBlock;
     }
 
     // Return current block reward.
@@ -69,5 +77,80 @@ contract Incentive is Owner {
     //         IBEP20(ali).transfer(_to, _amount);
     //     }
     // }
- 
+
+
+    /**
+     * @notice Returns the result of (base ** exponent) with SafeMath
+     * @param base The base number. Example: 2
+     * @param exponent The exponent used to raise the base. Example: 3
+     * @return A number representing the given base taken to the power of the given exponent. Example: 2 ** 3 = 8
+     */
+    function pow(uint base, uint exponent) internal pure returns (uint) {
+        if (exponent == 0) {
+            return 1;
+        } else if (exponent == 1) {
+            return base;
+        } else if (base == 0 && exponent != 0) {
+            return 0;
+        } else {
+            uint result = base;
+            for (uint i = 1; i < exponent; i++) {
+                result = result.mul(base);
+            }
+            return result;
+        }
+    }
+
+    /**
+     * @notice Caculate the reward per block at the period: (keepPercent / 100) ** period * initialRewardPerBlock
+     * @param periodIndex The period index. The period index must be between [0, maxiumPeriodIndex]
+     * @return A number representing the reward token per block at specific period. Result is scaled by 1e18.
+     */
+    function getRewardPerBlock(uint periodIndex) public view returns (uint) {
+        require(periodIndex <= maxiumPeriodIndex, 'Incentive: period invalid');
+        return pow(keepPercent, periodIndex).mul(initialRewardPerBlock).div(pow(100, periodIndex));
+    }
+
+    /**
+     * @notice Calculate the block number corresponding to each milestone at the beginning of each period.
+     * @param periodIndex The period index. The period index must be between [0, maxiumPeriodIndex]
+     * @return A number representing the block number of the milestone at the beginning of the period.
+     */
+    function getBlockNumberOfMilestone(uint periodIndex) public view returns (uint) {
+        require(periodIndex <= maxiumPeriodIndex, 'Incentive: period invalid');
+        return blockPerPeriod.mul(periodIndex).add(startBlock);
+    }
+
+    /**
+     * @notice Determine the period corresponding to any block number.
+     * @param blockNumber The block number. The block number must be >= startBlock
+     * @return A number representing period index of the input block number.
+     */
+    function getPeriodIndexByBlockNumber(uint blockNumber) public view returns (uint) {
+        require(blockNumber >= startBlock, 'Incentive: blockNumber invalid');
+        return blockNumber.sub(startBlock).div(blockPerPeriod);
+    }
+
+    /**
+     * @notice Calculate the reward that can be claimed from the last received time to the present time.
+     * @return A number representing the reclamable ALI tokens. Result is scaled by 1e18.
+     */
+    function getClaimableReward() public view returns (uint) {
+        uint currentBlock = block.number;
+        require(currentBlock >= startBlock, 'Incentive: currentBlock invalid');
+
+        uint lastClaimPeriod = getPeriodIndexByBlockNumber(lastRewardBlock); 
+        uint currentPeriod = getPeriodIndexByBlockNumber(currentBlock);
+        
+        uint startCalculationBlock = lastRewardBlock; 
+        uint sum = 0; 
+        
+        for(uint i = lastClaimPeriod ; i  <= currentPeriod ; i++) { 
+            uint nextBlock = i < currentPeriod ? getBlockNumberOfMilestone(i+1) : currentBlock;
+            uint delta = nextBlock.sub(startCalculationBlock);
+            sum = sum.add(delta.mul(getRewardPerBlock(i)));
+            startCalculationBlock = nextBlock; 
+        } 
+        return sum;
+}
 }
