@@ -31,19 +31,6 @@ contract Incentive is Owner {
         startBlock = _startBlock;
     }
 
-    // Return current block reward.
-    // function getALIBlockReward() public view returns (uint256) {
-    //     uint256 interval = now.sub(ali.releaseDate());
-    //     uint256 currentPeriod = interval.div(ali.period());
-    //     return ali.getReleasedTokenperPeriod(currentPeriod).div(2);
-    // }
-
-    // function changeNumberTokenperBlock(uint val) external isOwner{
-    //     require(val > 0, "invalid number");
-    //     emit ChangeNumberTokenperBlock(numberTokenperBlock, val);
-    //     numberTokenperBlock = val;
-    // }
-
     function claim() external{
         require(msg.sender == claimableAdress, "not allow to claim");
         
@@ -57,17 +44,6 @@ contract Incentive is Owner {
         emit Claim(lastRewardBlock, block.number, claimableAmount, msg.sender);
         lastRewardBlock = block.number;
     }
-
-    // Safe token transfer function, just in case if not have enough token.
-    // function safeCakeTransfer(address _to, uint256 _amount) internal {
-    //     uint256 bal = IBEP20(ali).balanceOf(address(this));
-    //     if (_amount > bal) {
-    //         IBEP20(ali).transfer(_to, bal);
-    //     } else {
-    //         IBEP20(ali).transfer(_to, _amount);
-    //     }
-    // }
-
 
     /**
      * @notice Returns the result of (base ** exponent) with SafeMath
