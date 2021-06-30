@@ -41,11 +41,11 @@ contract Incentive is Owner {
     }
 
     // Return current block reward.
-    function getALIBlockReward() public view returns (uint256) {
-        uint256 interval = now.sub(ali.releaseDate());
-        uint256 currentPeriod = interval.div(ali.period());
-        return ali.getReleasedTokenperPeriod(currentPeriod).div(2);
-    }
+    // function getALIBlockReward() public view returns (uint256) {
+    //     uint256 interval = now.sub(ali.releaseDate());
+    //     uint256 currentPeriod = interval.div(ali.period());
+    //     return ali.getReleasedTokenperPeriod(currentPeriod).div(2);
+    // }
 
     // function changeNumberTokenperBlock(uint val) external isOwner{
     //     require(val > 0, "invalid number");
@@ -60,8 +60,7 @@ contract Incentive is Owner {
             return;
         }
         
-        uint interval = block.number.sub(lastRewardBlock);
-        uint claimableAmount = interval.mul(getALIBlockReward());
+        uint claimableAmount = getClaimableReward();
         
         ali.mint(msg.sender, claimableAmount);
         emit Claim(lastRewardBlock, block.number, claimableAmount, msg.sender);
