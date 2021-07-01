@@ -38,7 +38,7 @@ contract Incentive is Owner {
             return;
         }
         
-        uint claimableAmount = getClaimableReward();
+        uint claimableAmount = getClaimableReward().mul(ali.getIncentiveWeight()).div(100);
         
         ali.mint(msg.sender, claimableAmount);
         emit Claim(lastRewardBlock, block.number, claimableAmount, msg.sender);
@@ -118,5 +118,5 @@ contract Incentive is Owner {
             startCalculationBlock = nextBlock; 
         } 
         return sum;
-}
+    }
 }
