@@ -34,10 +34,6 @@ contract Incentive is Owner {
     function claim() external{
         require(msg.sender == claimableAdress, "not allow to claim");
         
-        if(IBEP20(ali).balanceOf(address(this)) == 0){
-            return;
-        }
-        
         uint claimableAmount = getClaimableReward().mul(ali.getIncentiveWeight()).div(100);
         
         ali.mint(msg.sender, claimableAmount);
