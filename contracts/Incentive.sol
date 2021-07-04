@@ -69,8 +69,14 @@ contract Incentive is Owner {
      * @return A number representing the reward token per block at specific period. Result is scaled by 1e18.
      */
     function getRewardPerBlock(uint periodIndex) public view returns (uint) {
-        require(periodIndex <= ali.getMaxiumPeriodIndex(), 'Incentive: period invalid');
-        return pow(ali.getKeepPercent(), periodIndex).mul(ali.getInitialRewardPerBlock()).div(pow(100, periodIndex));
+        // require(periodIndex <= ali.getMaxiumPeriodIndex(), 'Incentive: period invalid');
+        // return pow(ali.getKeepPercent(), periodIndex).mul(ali.getInitialRewardPerBlock()).div(pow(100, periodIndex));
+        if(periodIndex >  ali.getMaxiumPeriodIndex()){
+            return 0;
+        }
+        else{
+            return pow(ali.getKeepPercent(), periodIndex).mul(ali.getInitialRewardPerBlock()).div(pow(100, periodIndex));
+        }
     }
 
     /**
@@ -79,7 +85,7 @@ contract Incentive is Owner {
      * @return A number representing the block number of the milestone at the beginning of the period.
      */
     function getBlockNumberOfMilestone(uint periodIndex) public view returns (uint) {
-        require(periodIndex <= ali.getMaxiumPeriodIndex(), 'Incentive: period invalid');
+        // require(periodIndex <= ali.getMaxiumPeriodIndex(), 'Incentive: period invalid');
         return ali.getBlockPerPeriod().mul(periodIndex).add(startBlock);
     }
 
@@ -111,7 +117,7 @@ contract Incentive is Owner {
             uint nextBlock = i < currentPeriod ? getBlockNumberOfMilestone(i+1) : currentBlock;
             uint delta = nextBlock.sub(startCalculationBlock);
             sum = sum.add(delta.mul(getRewardPerBlock(i)));
-            startCalculationBlock = nextBlock; 
+            startCalculationBlock = nextBlock;
         } 
         return sum;
     }
