@@ -35,6 +35,10 @@ contract Incentive is Owner {
         require(msg.sender == claimableAdress, "not allow to claim");
         
         uint claimableAmount = getClaimableReward().mul(ali.getIncentiveWeight()).div(100);
+
+        if(claimableAmount == 0){
+            return;
+        }
         
         ali.mint(msg.sender, claimableAmount);
         emit Claim(lastRewardBlock, block.number, claimableAmount, msg.sender);
