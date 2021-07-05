@@ -3,8 +3,6 @@ pragma solidity >=0.4.22 <0.9.0;
 
 import '@pancakeswap/pancake-swap-lib/contracts/math/SafeMath.sol';
 import '@pancakeswap/pancake-swap-lib/contracts/token/BEP20/IBEP20.sol';
-// import '@pancakeswap/pancake-swap-lib/contracts/token/BEP20/SafeBEP20.sol';
-// import '@pancakeswap/pancake-swap-lib/contracts/access/Ownable.sol';
 import './Ownable.sol';
 import './ALIToken.sol';
 
@@ -73,9 +71,7 @@ contract Incentive is Owner {
      * @return A number representing the reward token per block at specific period. Result is scaled by 1e18.
      */
     function getRewardPerBlock(uint periodIndex) public view returns (uint) {
-        // require(periodIndex <= ali.getMaxiumPeriodIndex(), 'Incentive: period invalid');
-        // return pow(ali.getKeepPercent(), periodIndex).mul(ali.getInitialRewardPerBlock()).div(pow(100, periodIndex));
-        if(periodIndex >  ali.getMaxiumPeriodIndex()){
+        if(periodIndex > ali.getMaxiumPeriodIndex()){
             return 0;
         }
         else{
@@ -89,7 +85,6 @@ contract Incentive is Owner {
      * @return A number representing the block number of the milestone at the beginning of the period.
      */
     function getBlockNumberOfMilestone(uint periodIndex) public view returns (uint) {
-        // require(periodIndex <= ali.getMaxiumPeriodIndex(), 'Incentive: period invalid');
         return ali.getBlockPerPeriod().mul(periodIndex).add(startBlock);
     }
 
@@ -99,7 +94,7 @@ contract Incentive is Owner {
      * @return A number representing period index of the input block number.
      */
     function getPeriodIndexByBlockNumber(uint blockNumber) public view returns (uint) {
-        require(blockNumber >= startBlock, 'Incentive: blockNumber invalid');
+        require(blockNumber >= startBlock, 'Incentive: blockNumber must be greater or equal startBlock');
         return blockNumber.sub(startBlock).div(ali.getBlockPerPeriod());
     }
 
@@ -108,9 +103,12 @@ contract Incentive is Owner {
      * @return A number representing the reclamable ALI tokens. Result is scaled by 1e18.
      */
     function getClaimableReward() public view returns (uint) {
-        uint currentBlock = block.number;
-        require(currentBlock >= startBlock, 'Incentive: currentBlock invalid');
-
+        uint maxBlock = getBlockNumberOfMilestone(ali.getMaxiumPeriodIndex()); 
+        uint currentBlock = block.number > maxBlock ? maxBlock: block.number;
+        
+        require(currentBlock >= startBlock, 'Incentive: currentBlock must be greater or equal startBlock');
+        require(lastRewardBlock < currentBlock , 'Incentive: lastRewardBlock must be less than currentBlock');
+        
         uint lastClaimPeriod = getPeriodIndexByBlockNumber(lastRewardBlock); 
         uint currentPeriod = getPeriodIndexByBlockNumber(currentBlock);
         
