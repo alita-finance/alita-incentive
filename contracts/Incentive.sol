@@ -107,7 +107,6 @@ contract Incentive is Owner {
         uint currentBlock = block.number > maxBlock ? maxBlock: block.number;
         
         require(currentBlock >= startBlock, 'Incentive: currentBlock must be greater or equal startBlock');
-        require(lastRewardBlock < currentBlock , 'Incentive: lastRewardBlock must be less than currentBlock');
         
         uint lastClaimPeriod = getPeriodIndexByBlockNumber(lastRewardBlock);
         uint currentPeriod = getPeriodIndexByBlockNumber(currentBlock);
